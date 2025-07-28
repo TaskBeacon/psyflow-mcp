@@ -20,7 +20,7 @@ from mcp.server.fastmcp import FastMCP
 # from mcp.server.fastmcp.prompts import base
 from mcp.server.fastmcp.prompts.base import UserMessage, Message
 from ruamel.yaml import YAML
-from tts_utils import list_supported_voices
+from .tts_utils import list_supported_voices
 
 # ─────────────────────────────
 # Config
