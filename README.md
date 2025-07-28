@@ -1,4 +1,51 @@
-# PsyFlow-MCP · Usage Guide
+# psyflow-mcp
+
+A minimal complete project (MCP) for psyflow.
+
+## Installation
+
+To install this project using `uv`:
+
+```bash
+uv pip install psyflow-mcp
+```
+
+## Usage with uvx
+
+`uvx` allows you to run commands within the project's `uv` environment without explicitly activating it. First, ensure you have `uvx` installed:
+
+```bash
+pip install uvx
+```
+
+Then, you can run the `psyflow-mcp` command (assuming `main.py` has a `main` function that is exposed as a script):
+
+```bash
+uvx psyflow-mcp
+```
+
+### Example `uvx` Configuration (uvx.json)
+
+You can configure `uvx` to automatically use this project's environment. Create a `uvx.json` file in your project root or a parent directory with the following content:
+
+```json
+{
+  "project_name": "psyflow-mcp",
+  "entry_point": "main:main",
+  "commands": {
+    "run": "psyflow-mcp"
+  }
+}
+```
+
+With this `uvx.json` in place, you can simply run:
+
+```bash
+uvx run
+```
+
+This will execute the `main` function from `main.py` within the `psyflow-mcp` environment.
+
 
 A lightweight **FastMCP** server that lets a language-model clone, transform, download and localize PsyFlow task templates using a single entry-point tool.
 
@@ -64,6 +111,33 @@ This configuration tells the CLI how to launch and communicate with the MCP serv
 }
 ```
 
+```json
+ "psyflow-mcp": {
+      "name": "PsyFlow-MCP",
+      "type": "stdio",          // communicate over STDIN / STDOUT
+      "description": "Local FastMCP server for PsyFlow task operations",
+      "isActive": true,         // set false to disable without deleting
+      "registryUrl": "",        // leave blank – weʼre running locally
+      "command": "python",      // executable to launch
+      "args": [
+            "E:\\xhmhc\\TaskBeacon\\psyflow-mcp\\main.py"
+               ]
+    }
+
+
+ "psyflow-mcp-pypi": {
+      "name": "PsyFlow-MCP",
+      "type": "stdio",          // communicate over STDIN / STDOUT
+      "description": "FastMCP server for PsyFlow task operations",
+      "isActive": true,         // set false to disable without deleting
+      "registryUrl": "",        // leave blank – weʼre running locally
+      "command": "uvx",      // executable to launch
+      "args": [
+            "psyflow-mcp"
+               ]
+    }
+```
+
 ### 2.2 · SSE Mode (Remote Tool)
 
 When the server is running persistently (as described in section 1.2), you can connect to it as a remote tool using its HTTP endpoint.
@@ -121,13 +195,13 @@ If you need to install dependencies from a private or alternative package index,
 
 **Using an environment variable:**
 ```bash
-export UV_INDEX_URL="https://your-pypi-mirror.com/simple"
+export UV_INDEX_URL="https://pypi.org/manage/project/psyflow-mcp/"
 uv pip install ...
 ```
 
 **Using a command-line flag:**
 ```bash
-uv pip install --index-url "https://your-pypi-mirror.com/simple" ...
+uv pip install --index-url "https://pypi.org/manage/project/psyflow-mcp/" ...
 ```
 
 ### 6.2 · Template Folder Layout
