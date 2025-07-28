@@ -168,6 +168,43 @@ def choose_template_prompt(
         UserMessage("Candidate templates:\n" + menu),
     ]
 
+
+@mcp.prompt(title="Choose Repository for Download")
+def choose_repo_prompt(
+    user_query: str,
+    candidates: list[dict],
+) -> list[Message]:
+    '''
+    Ask the LLM to pick the SINGLE repository that best matches the user's query.
+
+    Parameters
+    ----------
+    user_query : str
+        The user's natural language query for the desired task/repository.
+    candidates : list[dict]
+        Each dict must have:
+          { "repo": "<name>", "readme_snippet": "<first 2000 chars>" }
+    '''
+    intro = (
+        "You are given a user's query for a task/repository and a list of "
+        "candidate PsyFlow template repositories.\n\n"
+        "Select the **one** repository that best matches the user's intent. "
+        "Consider the repository name and the README snippet for context.\n"
+        "Respond with **only** the repo name on a single line.\n"
+        "If NONE of the candidates are a reasonable match, respond with `NONE`."
+    )
+
+    menu = "\n".join(
+        f"- **{c['repo']}**: {c['readme_snippet']}" for c in candidates
+    ) or "(no repositories found)"
+
+    return [
+        UserMessage(intro),
+        UserMessage(f"User query: {user_query}"),
+        UserMessage("Candidate repositories:\n" + menu),
+    ]
+
+
 # ═════════════════════════════
 # HELPERS
 # ═════════════════════════════
@@ -231,12 +268,32 @@ async def build_task(target_task: str, source_task: Optional[str] = None) -> Dic
 
 @mcp.tool()
 async def download_task(repo: str) -> Dict:
-    '''Clone any template repo locally and return the path.'''
-    repos = await task_repos()
-    if repo not in repos:
-        raise ValueError("Repo not found or not a task template.")
-    path = await asyncio.to_thread(clone, repo)
-    return {"template_path": str(path)}
+    '''
+    Clone any template repo locally and return the path.
+    If the repo name is ambiguous or a natural language query, it will
+    use an LLM to select the best matching repository.
+    '''
+    all_repos = await task_repos()
+
+    # Check for exact match first
+    if repo in all_repos:
+        path = await asyncio.to_thread(clone, repo)
+        return {"template_path": str(path)}
+
+    # If not an exact match, use LLM to select the best repo
+    snippets = []
+    for r_name in all_repos:
+        readme_url = f"https://raw.githubusercontent.com/{ORG}/{r_name}/main/README.md"
+        async with httpx.AsyncClient() as c:
+            rd = await c.get(readme_url, timeout=10)
+        snippet = rd.text[:2000].replace("\n", " ") if rd.status_code == 200 else ""
+        snippets.append({"repo": r_name, "readme_snippet": snippet})
+
+    msgs = choose_repo_prompt(repo, snippets)
+    return {
+        "prompt_messages": [m.dict() for m in msgs],
+        "note": "Reply with chosen repo, then call download_task again with the selected repo name.",
+    }
 
 
 @mcp.tool()
