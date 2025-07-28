@@ -1,80 +1,78 @@
-# psyflow-mcp
+# psyflow_mcp
 
 A minimal complete project (MCP) for psyflow.
 
-## Installation
+---
 
-To install this project using `uv`:
+## Overview
 
-```bash
-uv pip install psyflow-mcp
-```
+`psyflow_mcp` is a lightweight **FastMCP** server that lets a language-model clone, transform, download and localize PsyFlow task templates using a single entry-point tool.
 
-## Usage with uvx
+This README provides instructions for setting up and using `psyflow_mcp` in different environments.
 
-`uvx` allows you to run commands within the project's `uv` environment without explicitly activating it. First, ensure you have `uvx` installed:
+---
+
+## 1 · Quick Start (Recommended)
+
+The easiest way to use `psyflow_mcp` is with `uvx`. This tool automatically downloads the package from PyPI, installs it and its dependencies into a temporary virtual environment, and runs it in a single step. No manual cloning or setup is required.
+
+### 1.1 · Prerequisites
+
+Ensure you have `uvx` installed. If not, you can install it with `pip`:
 
 ```bash
 pip install uvx
 ```
 
-Then, you can run the `psyflow-mcp` command (assuming `main.py` has a `main` function that is exposed as a script):
+### 1.2 · LLM Tool Configuration (JSON)
 
-```bash
-uvx psyflow-mcp
-```
-
-### Example `uvx` Configuration (uvx.json)
-
-You can configure `uvx` to automatically use this project's environment. Create a `uvx.json` file in your project root or a parent directory with the following content:
+To integrate `psyflow_mcp` with your LLM tool (like Gemini CLI or Cursor), use the following JSON configuration. This tells the tool how to run the server using `uvx`.
 
 ```json
 {
-  "project_name": "psyflow-mcp",
-  "entry_point": "main:main",
-  "commands": {
-    "run": "psyflow-mcp"
-  }
+  "name": "psyflow_mcp",
+  "type": "stdio",
+  "description": "Local FastMCP server for PsyFlow task operations. Uses uvx for automatic setup.",
+  "isActive": true,
+  "command": "uvx",
+  "args": [
+    "psyflow_mcp"
+  ]
 }
 ```
 
-With this `uvx.json` in place, you can simply run:
-
-```bash
-uvx run
-```
-
-This will execute the `main` function from `main.py` within the `psyflow-mcp` environment.
-
-
-A lightweight **FastMCP** server that lets a language-model clone, transform, download and localize PsyFlow task templates using a single entry-point tool.
+With this setup, the LLM can now use the `psyflow_mcp` tools.
 
 ---
 
-## 1 · Setup & Run
+## 2 · Manual Setup (For Developers)
 
-This project uses `uv` for fast and reliable dependency management.
+This method is for developers who want to modify the source code of `psyflow_mcp`.
 
-### 1.1 · Local Setup (StdIO)
+### 2.1 · Local Setup (StdIO)
 
 This is the standard mode for local development and testing, where the server communicates over `STDIN/STDOUT`.
 
-```bash
-# 1. Clone the repository
-git clone https://github.com/TaskBeacon/psyflow-mcp.git
-cd psyflow-mcp
+1.  **Clone the repository:**
+    ```bash
+    git clone https://github.com/TaskBeacon/psyflow_mcp.git
+    cd psyflow_mcp
+    ```
 
-# 2. Create a virtual environment and install dependencies
-uv venv
-uv pip install "mcp[cli]>=1.12.2" psyflow gitpython httpx ruamel.yaml
+2.  **Create a virtual environment and install dependencies:**
+    ```bash
+    uv venv
+    uv pip install "mcp[cli]>=1.12.2" psyflow gitpython httpx ruamel.yaml
+    ```
 
-# 3. Launch the std-IO server
-uv run python main.py
-```
+3.  **Launch the std-IO server:**
+    ```bash
+    uv run python main.py
+    ```
 
 The process stays in the foreground and communicates with the LLM via the Model-Context-Protocol (MCP).
 
-### 1.2 · Server Setup (SSE)
+### 2.2 · Server Setup (SSE)
 
 For a persistent, stateful server, you can use Server-Sent Events (SSE). This is ideal for production or when multiple clients need to interact with the same server instance.
 
@@ -89,68 +87,6 @@ For a persistent, stateful server, you can use Server-Sent Events (SSE). This is
     uv run python main.py
     ```
     The server will now be accessible at `http://localhost:8000/mcp`.
-
----
-
-## 2 · MCP/LLM Setup
-
-To connect this server to a Large Language Model (LLM) via a command-line interface (CLI) like Gemini CLI or a tool-integrated environment like Cursor, you'll need to provide a JSON configuration. Below are templates for both `StdIO` and `SSE` modes.
-
-### 2.1 · StdIO Mode (Local Tool)
-
-This configuration tells the CLI how to launch and communicate with the MCP server directly. Create a `psyflow-mcp.json` file with the following content, making sure to replace `/path/to/your/project/psyflow-mcp` with the actual absolute path to the cloned repository on your machine.
-
-```json
-{
-  "tool": {
-    "name": "psyflow_mcp_stdio",
-    "description": "A lightweight server to clone, transform, and download PsyFlow task templates.",
-    "command": ["uv", "run", "python", "main.py"],
-    "working_directory": "/path/to/your/project/psyflow-mcp"
-  }
-}
-```
-
-```json
- "psyflow-mcp": {
-      "name": "PsyFlow-MCP",
-      "type": "stdio",          // communicate over STDIN / STDOUT
-      "description": "Local FastMCP server for PsyFlow task operations",
-      "isActive": true,         // set false to disable without deleting
-      "registryUrl": "",        // leave blank – weʼre running locally
-      "command": "python",      // executable to launch
-      "args": [
-            "E:\\xhmhc\\TaskBeacon\\psyflow-mcp\\main.py"
-               ]
-    }
-
-
- "psyflow-mcp-pypi": {
-      "name": "PsyFlow-MCP",
-      "type": "stdio",          // communicate over STDIN / STDOUT
-      "description": "FastMCP server for PsyFlow task operations",
-      "isActive": true,         // set false to disable without deleting
-      "registryUrl": "",        // leave blank – weʼre running locally
-      "command": "uvx",      // executable to launch
-      "args": [
-            "psyflow-mcp"
-               ]
-    }
-```
-
-### 2.2 · SSE Mode (Remote Tool)
-
-When the server is running persistently (as described in section 1.2), you can connect to it as a remote tool using its HTTP endpoint.
-
-```json
-{
-  "tool": {
-    "name": "psyflow_mcp_sse",
-    "description": "A lightweight server to clone, transform, and download PsyFlow task templates.",
-    "endpoint": "http://localhost:8000/mcp"
-  }
-}
-```
 
 ---
 
@@ -195,13 +131,13 @@ If you need to install dependencies from a private or alternative package index,
 
 **Using an environment variable:**
 ```bash
-export UV_INDEX_URL="https://pypi.org/manage/project/psyflow-mcp/"
+export UV_INDEX_URL="https://your-pypi-repository.com/"
 uv pip install ...
 ```
 
 **Using a command-line flag:**
 ```bash
-uv pip install --index-url "https://pypi.org/manage/project/psyflow-mcp/" ...
+uv pip install --index-url "https://your-pypi-repository.com/" ...
 ```
 
 ### 6.2 · Template Folder Layout

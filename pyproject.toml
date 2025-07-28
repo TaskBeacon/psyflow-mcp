@@ -1,6 +1,6 @@
 [project]
-name = "psyflow_mcp"
-version = "0.1.4"
+name = "psyflow-mcp"
+version = "0.1.12"
 description = "A minimal complete project (MCP) for psyflow"
 authors = [
   { name = "Zhipeng Cao", email = "zhipeng30@foxmail.com" }
@@ -29,6 +29,7 @@ Repository = "https://github.com/TaskBeacon/psyflow-mcp"
 
 [project.scripts]
 psyflow_mcp = "psyflow_mcp.main:main"
+psyflow-mcp = "psyflow_mcp.main:main"
 
 [build-system]
 requires = ["setuptools>=61.0", "wheel"]
