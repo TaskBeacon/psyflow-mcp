@@ -1,0 +1,79 @@
+[
+  {
+    "name": "build_task",
+    "description": "Main entry-point. Clones a source task template and prepares it for transformation into a target task. If no source is given, it helps the user choose one.",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "target_task": {
+          "type": "string",
+          "description": "The name of the new task you want to create (e.g., 'Stroop')."
+        },
+        "source_task": {
+          "type": "string",
+          "description": "Optional. The name of the template task to use as a starting point (e.g., 'Flanker')."
+        }
+      },
+      "required": ["target_task"]
+    }
+  },
+  {
+    "name": "list_tasks",
+    "description": "Returns a list of all available task templates, including their repository name, a snippet from their README, and a list of branches.",
+    "parameters": {
+      "type": "object",
+      "properties": {},
+      "required": []
+    }
+  },
+  {
+    "name": "download_task",
+    "description": "Clones any template task repository from the registry and returns its local path.",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "repo": {
+          "type": "string",
+          "description": "The name of the repository to clone."
+        }
+      },
+      "required": ["repo"]
+    }
+  },
+  {
+    "name": "localize_config",
+    "description": "Translates a task's config.yaml file and sets the appropriate text-to-speech voice. Deletes old voice assets.",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "task_path": {
+          "type": "string",
+          "description": "The absolute local path to the task directory containing config.yaml."
+        },
+        "target_language": {
+          "type": "string",
+          "description": "The target language for translation (e.g., 'zh', 'ja')."
+        },
+        "voice": {
+          "type": "string",
+          "description": "Optional. The specific voice short_name to use (e.g., 'zh-CN-YunyangNeural'). If omitted, a suitable voice will be selected automatically."
+        }
+      },
+      "required": ["task_path", "target_language"]
+    }
+  },
+  {
+    "name": "list_voices",
+    "description": "Lists available text-to-speech voices, which can be filtered by language.",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "filter_lang": {
+          "type": "string",
+          "description": "Optional. The language code to filter voices by (e.g., 'en', 'ja')."
+        }
+      },
+      "required": []
+    }
+  }
+]

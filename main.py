@@ -1,10 +1,11 @@
-"""
+
+'''
 psyflow_mcp/main.py
 -------------------
 FastMCP std-IO server exposing:
-  • build_task, transform_task, download_task, translate_config (tools)
-  • transform_prompt, translate_config_prompt, choose_template_prompt (prompts)
-"""
+  • build_task, transform_task, download_task, localize (tools)
+  • transform_prompt, localize_prompt, choose_template_prompt (prompts)
+'''
 
 from __future__ import annotations
 
@@ -19,6 +20,7 @@ from mcp.server.fastmcp import FastMCP
 # from mcp.server.fastmcp.prompts import base
 from mcp.server.fastmcp.prompts.base import UserMessage, Message
 from ruamel.yaml import YAML
+from psyflow import list_supported_voices
 
 # ─────────────────────────────
 # Config
@@ -37,24 +39,25 @@ mcp = FastMCP(name="psyflow-mcp")
 # ═════════════════════════════
 # Prompts
 # ═════════════════════════════
-_PROMPT_TEMPLATE = textwrap.dedent("""
+_PROMPT_TEMPLATE = textwrap.dedent('''
 Turn my existing {source_task} implementation in PsyFlow/TAPs into a {target_task} task with as few changes as possible.
 
 **Key requirements:**
-- The unit for all stimuli sizes must be in 'deg' (degrees of visual angle).
+- The unit for all stimuli sizes must be in \'deg\' (degrees of visual angle).
 - When creating the new task, a new folder should be created with the task name, and the temporary `task_cache` folder should be removed.
 - All voice-over files (`_voice.mp3`) and other non-relevant files in the `assets/` directory of the source task must be removed.
+- When accessing recorded variables for stats (e.g., in `main.py` for break or final stats), you must prefix the variable with the `stimunit` label from `run_trial.py`. For example, to access `hit` for a `stimunit` labeled "target", use `target_hit`.
 
 Breakdown:
 
 Stage 0: Plan
 * Read literature and figure out what a typical {target_task} task looks like.
 * Define the flow: blocks → trials → events.
-* Identify stimulus types (ensuring sizes are in 'deg'), response keys, timing parameters, and key output fields.
+* Identify stimulus types (ensuring sizes are in \'deg\'), response keys, timing parameters, and key output fields.
 
 Stage 1: config.yaml
 * Adapt the existing config.yaml to run a {target_task} task.
-* Ensure all stimulus sizes are defined in 'deg' and are of an appropriate size for a typical screen.
+* Ensure all stimulus sizes are defined in \'deg\' and are of an appropriate size for a typical screen.
 * Highlight any parameters that need careful review.
 
 Stage 2: Trial logic (src/run_trial.py)
@@ -64,6 +67,7 @@ Stage 2: Trial logic (src/run_trial.py)
 Stage 3: Block/session logic (main.py)
 * Implement block order, feedback screens, and pauses based on the template task.
 * Keep the public API consistent with the original task.
+* Ensure that when accessing recorded variables to a specific stimunit, the correct `stimunit` prefix is used (e.g., `target_hit`).
 
 Stage 4: Asset handling
 * Identify and list for removal all `_voice.mp3` files from the `assets/` directory.
@@ -83,7 +87,7 @@ Stage 6: Static validation
 * Spot any logic errors or unused variables.
 
 (No PsychoPy runtime or unit tests are required during this step)
-""").strip()
+''').strip()
 
 @mcp.prompt(title="Task Transformation Prompt")
 def transform_prompt(source_task: str, target_task: str) -> UserMessage:
@@ -92,15 +96,22 @@ def transform_prompt(source_task: str, target_task: str) -> UserMessage:
     ))
 
 
-@mcp.prompt(title="Translate Config YAML")
-def translate_config_prompt(yaml_text: str, target_language: str) -> list[Message]:
+@mcp.prompt(title="Localize Config YAML")
+def localize_prompt(yaml_text: str, target_language: str, voice_options: Optional[str] = None) -> list[Message]:
     intro = (
         f"Translate selected fields of this PsyFlow config into {target_language}. "
-        "Translate ONLY:\n"
-        "  • subinfo_mapping values\n"
-        "  • stimuli entries of type 'text' or 'textbox' (the `text` field)\n\n"
-        "Return the COMPLETE YAML with translated values — no commentary."
+        "Translate ONLY:"
+        "  • subinfo_mapping values"
+        "  • stimuli entries of type 'text' or 'textbox' (the `text` field)"
     )
+    if voice_options:
+        intro += (
+            f"Then, select the most suitable voice for {target_language} from the list below. Add the selected voice's short name to the config as `voice: <short_name>`. "
+            "The short name is the identifier at the beginning of each line (e.g., 'zh-CN-YunyangNeural')."
+            "If no suitable voice is available, set `voice: null`."
+            f"Available voices: {voice_options}"
+        )
+    intro += "Return the COMPLETE YAML with translated values — no commentary."
     return [UserMessage(intro), UserMessage(yaml_text)]
 
 
@@ -109,7 +120,7 @@ def choose_template_prompt(
     desc: str,
     candidates: list[dict],
 ) -> list[Message]:
-    """
+    '''
     Ask the LLM to pick the SINGLE template repo that will require the
     fewest changes to become the requested task.
 
@@ -121,7 +132,7 @@ def choose_template_prompt(
     candidates : list[dict]
         Each dict must have:
           { "repo": "<name>", "readme_snippet": "<first 400 chars>" }
-    """
+    '''
     criteria = (
         "- Prefer tasks with the same **response mapping paradigm** "
         "(e.g. 2-choice left/right, go/no-go, continuous RT).\n"
@@ -180,10 +191,10 @@ def clone(repo: str) -> Path:
 # ═════════════════════════════
 @mcp.tool()
 async def build_task(target_task: str, source_task: Optional[str] = None) -> Dict:
-    """
+    '''
     • With `source_task` → clone repo & return Stage-0→5 prompt + local path.
     • Without `source_task` → send `choose_template_prompt` so the LLM picks.
-    """
+    '''
     repos = await task_repos()
 
     # branch 1 : explicit source
@@ -214,7 +225,7 @@ async def build_task(target_task: str, source_task: Optional[str] = None) -> Dic
 
 @mcp.tool()
 async def download_task(repo: str) -> Dict:
-    """Clone any template repo locally and return the path."""
+    '''Clone any template repo locally and return the path.'''
     repos = await task_repos()
     if repo not in repos:
         raise ValueError("Repo not found or not a task template.")
@@ -223,27 +234,47 @@ async def download_task(repo: str) -> Dict:
 
 
 @mcp.tool()
-async def translate_config(task_path: str, target_language: str) -> Dict:
-    """
+async def localize(task_path: str, target_language: str, voice: Optional[str] = None) -> Dict:
+    '''
     Load <task_path>/config.yaml and feed its YAML text to
-    translate_config_prompt.  Returns prompt_messages ready for the LLM.
-    """
+    localize_prompt.  Returns prompt_messages ready for the LLM.
+    '''
+    # Delete old voice files
+    assets_path = Path(task_path) / "assets"
+    if assets_path.exists():
+        for f in assets_path.glob("*_voice.mp3"):
+            f.unlink()
+
     cfg_path = Path(task_path) / "config.yaml"
     if not cfg_path.exists():
         raise FileNotFoundError("config.yaml not found in given path.")
     yaml_text = cfg_path.read_text(encoding="utf-8")
-    msgs = translate_config_prompt(yaml_text, target_language)
+
+    # Get voice options if not provided
+    if voice:
+        voice_options = voice
+    else:
+        voice_options = list_voices(filter_lang=target_language)
+
+    msgs = localize_prompt(yaml_text, target_language, voice_options)
     return {"prompt_messages": [m.dict() for m in msgs]}
 
 @mcp.tool()
+def list_voices(filter_lang: Optional[str] = None) -> str:
+    '''
+    List supported voices from psyflow, optionally filtering by language.
+    '''
+    return list_supported_voices(filter_lang=filter_lang, human_readable=True)
+
+@mcp.tool()
 async def list_tasks() -> List[Dict]:
-    """
+    '''
     Return metadata for every task template repo:
 
       • repo              – repository name
       • readme_snippet    – first 2000 characters of README.md
       • branches          – up to 10 branch names
-    """
+    '''
     repos = await task_repos()
     results: List[Dict] = []
 
