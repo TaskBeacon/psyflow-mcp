@@ -16,7 +16,8 @@ from typing import Dict, List, Optional
 import httpx
 from git import Repo
 from mcp.server.fastmcp import FastMCP
-from mcp.server.fastmcp.prompts import base
+# from mcp.server.fastmcp.prompts import base
+from mcp.server.fastmcp.prompts.base import UserMessage, Message
 from ruamel.yaml import YAML
 
 # ─────────────────────────────
@@ -39,48 +40,60 @@ mcp = FastMCP(name="psyflow-mcp")
 _PROMPT_TEMPLATE = textwrap.dedent("""
 Turn my existing {source_task} implementation in PsyFlow/TAPs into a {target_task} task with as few changes as possible.
 
+**Key requirements:**
+- The unit for all stimuli sizes must be in 'deg' (degrees of visual angle).
+- When creating the new task, a new folder should be created with the task name, and the temporary `task_cache` folder should be removed.
+- All voice-over files (`_voice.mp3`) and other non-relevant files in the `assets/` directory of the source task must be removed.
+
 Breakdown:
 
 Stage 0: Plan
-* Read literature and figure out what a typical {target_task} task looks like
-* Define the flow: blocks → trials → events
-* Identify stimulus types, response keys, timing parameters, and key output fields
+* Read literature and figure out what a typical {target_task} task looks like.
+* Define the flow: blocks → trials → events.
+* Identify stimulus types (ensuring sizes are in 'deg'), response keys, timing parameters, and key output fields.
 
 Stage 1: config.yaml
-* Adapt the existing config.yaml to run a {target_task} task
-* Highlight any parameters that need careful review
+* Adapt the existing config.yaml to run a {target_task} task.
+* Ensure all stimulus sizes are defined in 'deg' and are of an appropriate size for a typical screen.
+* Highlight any parameters that need careful review.
 
 Stage 2: Trial logic (src/run_trial.py)
-* Adapt one existing trial template to run a single {target_task} trial
-* (Optional) If needed, add helpers in src/utils.py; otherwise skip
+* Adapt one existing trial template to run a single {target_task} trial.
+* (Optional) If needed, add helpers in src/utils.py; otherwise skip.
 
 Stage 3: Block/session logic (main.py)
-* Implement block order, feedback screens, and pauses based on the template task
-* Keep the public API consistent with the original task
+* Implement block order, feedback screens, and pauses based on the template task.
+* Keep the public API consistent with the original task.
 
-Stage 4: README.md
-* Match the structure and tone of existing tasks
-* Cover: purpose, install steps, config details, run instructions, and expected outputs
+Stage 4: Asset handling
+* Identify and list for removal all `_voice.mp3` files from the `assets/` directory.
+* Identify and list for removal any other files in `assets/` not relevant to the new {target_task}.
 
-Stage 5: Static validation
-* Check that config.yaml keys line up with code references
-* Ensure logged DataFrame columns match the template task
-* Verify naming, docstrings, and imports follow PsyFlow conventions
-* Confirm variables such as timing and triggers match between run_trial.py and config.yaml
-* Spot any logic errors or unused variables
+Stage 5: README.md
+* Match the structure and tone of existing tasks.
+* Cover: purpose, install steps, config details, run instructions, and expected outputs.
+
+Stage 6: Static validation
+* Check for correct chainable syntax (e.g., using `\\` for new lines).
+* Check that `src/__init__.py` is properly defined.
+* Cross-reference `config.yaml` with `main.py`, `run_trial.py`, and `utils.py` (if it exists) to ensure all stimuli, variables, durations, and triggers are defined and used consistently.
+* Check that config.yaml keys line up with code references.
+* Ensure logged DataFrame columns match the template task.
+* Verify naming, docstrings, and imports follow PsyFlow conventions.
+* Spot any logic errors or unused variables.
 
 (No PsychoPy runtime or unit tests are required during this step)
 """).strip()
 
 @mcp.prompt(title="Task Transformation Prompt")
-def transform_prompt(source_task: str, target_task: str) -> base.UserMessage:
-    return base.UserMessage(_PROMPT_TEMPLATE.format(
+def transform_prompt(source_task: str, target_task: str) -> UserMessage:
+    return UserMessage(_PROMPT_TEMPLATE.format(
         source_task=source_task, target_task=target_task
     ))
 
 
 @mcp.prompt(title="Translate Config YAML")
-def translate_config_prompt(yaml_text: str, target_language: str) -> list[base.Message]:
+def translate_config_prompt(yaml_text: str, target_language: str) -> list[Message]:
     intro = (
         f"Translate selected fields of this PsyFlow config into {target_language}. "
         "Translate ONLY:\n"
@@ -88,14 +101,14 @@ def translate_config_prompt(yaml_text: str, target_language: str) -> list[base.M
         "  • stimuli entries of type 'text' or 'textbox' (the `text` field)\n\n"
         "Return the COMPLETE YAML with translated values — no commentary."
     )
-    return [base.UserMessage(intro), base.UserMessage(yaml_text)]
+    return [UserMessage(intro), UserMessage(yaml_text)]
 
 
 @mcp.prompt(title="Choose Template")
 def choose_template_prompt(
     desc: str,
     candidates: list[dict],
-) -> list[base.Message]:
+) -> list[Message]:
     """
     Ask the LLM to pick the SINGLE template repo that will require the
     fewest changes to become the requested task.
@@ -133,9 +146,9 @@ def choose_template_prompt(
     ) or "(no templates found)"
 
     return [
-        base.UserMessage(intro),
-        base.UserMessage(f"Desired task:\n{desc}"),
-        base.UserMessage("Candidate templates:\n" + menu),
+        UserMessage(intro),
+        UserMessage(f"Desired task:\n{desc}"),
+        UserMessage("Candidate templates:\n" + menu),
     ]
 
 # ═════════════════════════════
@@ -251,4 +264,4 @@ async def list_tasks() -> List[Dict]:
 # MAIN
 # ═════════════════════════════
 if __name__ == "__main__":
-    mcp.run_stdio()
+    mcp.run(transport="stdio")
