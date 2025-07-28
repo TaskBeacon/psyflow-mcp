@@ -106,9 +106,9 @@ def localize_prompt(yaml_text: str, target_language: str, voice_options: Optiona
     )
     if voice_options:
         intro += (
-            f"Then, select the most suitable voice for {target_language} from the list below. Add the selected voice's short name to the config as `voice: <short_name>`. "
+            f"Then, select the most suitable voice for {target_language} from the list below. Update the `voice_name` field in the config with the selected voice's short name. "
             "The short name is the identifier at the beginning of each line (e.g., 'zh-CN-YunyangNeural')."
-            "If no suitable voice is available, set `voice: null`."
+            "If no suitable voice is available, set `voice_name: null`."
             f"Available voices: {voice_options}"
         )
     intro += "Return the COMPLETE YAML with translated values — no commentary."
