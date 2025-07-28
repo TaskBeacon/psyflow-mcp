@@ -96,7 +96,7 @@ def transform_prompt(source_task: str, target_task: str) -> UserMessage:
     ))
 
 
-@mcp.prompt(title="Localize Config YAML")
+@mcp.prompt(title="Localize task")
 def localize_prompt(yaml_text: str, target_language: str, voice_options: Optional[str] = None) -> list[Message]:
     intro = (
         f"Translate selected fields of this PsyFlow config into {target_language}. "
@@ -104,14 +104,20 @@ def localize_prompt(yaml_text: str, target_language: str, voice_options: Optiona
         "  • subinfo_mapping values"
         "  • stimuli entries of type 'text' or 'textbox' (the `text` field)"
     )
+
+    intro = (
+        f"For the {target_language}, please also adjust font field for stimuli entries of type 'text' or 'textbox' "
+        "Ensure the text, or textbox is displayed in the correct font.")
+
+
     if voice_options:
         intro += (
             f"Then, select the most suitable voice for {target_language} from the list below. Update the `voice_name` field in the config with the selected voice's short name. "
             "The short name is the identifier at the beginning of each line (e.g., 'zh-CN-YunyangNeural')."
             "If no suitable voice is available, set `voice_name: null`."
-            f"Available voices: {voice_options}"
+            f"Available voices: {voice_options}; select one from it"
         )
-    intro += "Return the COMPLETE YAML with translated values — no commentary."
+    intro += "Lastly, update the config.yaml file with translated values and tweaks — no commentary."
     return [UserMessage(intro), UserMessage(yaml_text)]
 
 
