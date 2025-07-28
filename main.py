@@ -7,7 +7,7 @@ FastMCP std-IO server exposing:
   • transform_prompt, localize_prompt, choose_template_prompt (prompts)
 '''
 
-from __future__ import annotations
+# from __future__ import annotations
 
 import asyncio
 import textwrap
@@ -20,7 +20,7 @@ from mcp.server.fastmcp import FastMCP
 # from mcp.server.fastmcp.prompts import base
 from mcp.server.fastmcp.prompts.base import UserMessage, Message
 from ruamel.yaml import YAML
-from psyflow import list_supported_voices
+from tts_utils import list_supported_voices
 
 # ─────────────────────────────
 # Config

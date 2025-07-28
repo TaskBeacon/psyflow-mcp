@@ -1,6 +1,6 @@
 [project]
 name = "psyflow-mcp"
-version = "0.1.0"
+version = "0.1.1"
 description = "A minimal complete project (MCP) for psyflow"
 authors = [
   { name = "Zhipeng Cao", email = "zhipeng30@foxmail.com" }
@@ -14,7 +14,7 @@ dependencies = [
   "GitPython",
   "mcp[cli]",
   "ruamel.yaml",
-  "psyflow",
+  "edge_tts",
 ]
 keywords = ["psyflow", "mcp", "uv"]
 classifiers = [

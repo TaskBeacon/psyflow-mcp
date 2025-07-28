@@ -8,7 +8,7 @@ async def _list_supported_voices_async(filter_lang: Optional[str] = None):
     if filter_lang:
         voices = [v for v in voices if v["Locale"].startswith(filter_lang)]
     return voices
-def list_supported_voices(
+async def list_supported_voices(
     filter_lang: Optional[str] = None,
     human_readable: bool = False
 ):
@@ -27,7 +27,7 @@ def list_supported_voices(
         The raw voice dictionaries if ``human_readable`` is ``False``,
         otherwise ``None``.
     """
-    voices = asyncio.run(_list_supported_voices_async(filter_lang))
+    voices = await _list_supported_voices_async(filter_lang)
     if not human_readable:
         return voices
 
