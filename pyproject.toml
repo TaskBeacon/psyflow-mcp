@@ -1,10 +1,40 @@
 [project]
 name = "psyflow-mcp"
 version = "0.1.0"
-description = "Add your description here"
+description = "A minimal complete project (MCP) for psyflow"
+authors = [
+  { name = "Zhipeng Cao", email = "zhipeng30@foxmail.com" }
+]
 readme = "README.md"
 requires-python = ">=3.10"
+license = "MIT"
+license-files = ["LICENSE"]
 dependencies = [
-    "mcp[cli]>=1.12.2",
-    "psyflow"
+  "httpx",
+  "GitPython",
+  "mcp[cli]",
+  "ruamel.yaml",
+  "psyflow",
 ]
+keywords = ["psyflow", "mcp", "uv"]
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "Operating System :: OS Independent",
+]
+
+[project.urls]
+Homepage = "https://github.com/TaskBeacon/psyflow-mcp"
+Repository = "https://github.com/TaskBeacon/psyflow-mcp"
+"Bug Tracker" = "https://github.com/TaskBeacon/psyflow-mcp/issues"
+
+[project.scripts]
+psyflow-mcp = "psyflow_mcp.main:main"
+
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.uv]
+# This belongs here, not under [project]
+required-version = ">=0.8.3"
+

@@ -1,4 +1,51 @@
-# PsyFlow-MCP · Usage Guide
+# psyflow-mcp
+
+A minimal complete project (MCP) for psyflow.
+
+## Installation
+
+To install this project using `uv`:
+
+```bash
+uv pip install psyflow-mcp
+```
+
+## Usage with uvx
+
+`uvx` allows you to run commands within the project's `uv` environment without explicitly activating it. First, ensure you have `uvx` installed:
+
+```bash
+pip install uvx
+```
+
+Then, you can run the `psyflow-mcp` command (assuming `main.py` has a `main` function that is exposed as a script):
+
+```bash
+uvx psyflow-mcp
+```
+
+### Example `uvx` Configuration (uvx.json)
+
+You can configure `uvx` to automatically use this project's environment. Create a `uvx.json` file in your project root or a parent directory with the following content:
+
+```json
+{
+  "project_name": "psyflow-mcp",
+  "entry_point": "main:main",
+  "commands": {
+    "run": "psyflow-mcp"
+  }
+}
+```
+
+With this `uvx.json` in place, you can simply run:
+
+```bash
+uvx run
+```
+
+This will execute the `main` function from `main.py` within the `psyflow-mcp` environment.
+
 
 A lightweight **FastMCP** server that lets a language-model clone, transform, download and localize PsyFlow task templates using a single entry-point tool.
 
