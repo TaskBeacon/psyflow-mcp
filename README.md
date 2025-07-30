@@ -1,6 +1,6 @@
 # psyflow_mcp
 
-A minimal complete project (MCP) for psyflow.
+A model context protocol (MCP) for psyflow.
 
 ---
 
