@@ -27,7 +27,7 @@ from edge_tts import VoicesManager
 # Config
 # ─────────────────────────────
 ORG = "TaskBeacon"
-CACHE = Path("./task_cache"); CACHE.mkdir(exist_ok=True)
+CACHE = Path("./task_cache"); 
 NON_TASK_REPOS = {"task-registry", ".github","psyflow","psyflow-mcp","community","taskbeacon.github.io"}
 
 yaml = YAML(); yaml.indent(mapping=2, sequence=4, offset=2)
@@ -289,6 +289,7 @@ async def build_task(target_task: str, source_task: Optional[str] = None) -> Dic
     • With `source_task` → clone repo & return Stage-0→5 prompt + local path.
     • Without `source_task` → send `choose_template_prompt` so the LLM picks.
     '''
+    CACHE.mkdir(exist_ok=True)
     repos = await task_repos()
 
     # branch 1 : explicit source
@@ -324,6 +325,7 @@ async def download_task(repo: str) -> Dict:
     If the repo name is ambiguous or a natural language query, it will
     use an LLM to select the best matching repository.
     '''
+    CACHE.mkdir(exist_ok=True)
     all_repos = await task_repos()
 
     # Check for exact match first
@@ -353,6 +355,7 @@ async def localize(task_path: str, target_language: str, voice: Optional[str] = 
     Load <task_path>/config.yaml and feed its YAML text to
     localize_prompt.  Returns prompt_messages ready for the LLM.
     '''
+    CACHE.mkdir(exist_ok=True)
     # Delete old voice files
     assets_path = Path(task_path) / "assets"
     if assets_path.exists():
@@ -408,8 +411,11 @@ async def list_tasks() -> List[Dict]:
 # ═════════════════════════════
 # MAIN
 # ═════════════════════════════
-if __name__ == "__main__":
-    mcp.run(transport="stdio")
 
 def main():
     mcp.run(transport="stdio")
+
+if __name__ == "__main__":
+    mcp.run(transport="stdio")
+
+

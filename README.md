@@ -1,20 +1,20 @@
-# psyflow_mcp
+# taskbeacon-mcp
 
-A model context protocol (MCP) for psyflow.
+A model context protocol (MCP) for taskbeacon.
 
 ---
 
 ## Overview
 
-`psyflow_mcp` is a lightweight **FastMCP** server that lets a language-model clone, transform, download and localize PsyFlow task templates using a single entry-point tool.
+`taskbeacon-mcp` is a lightweight **FastMCP** server that lets a language-model clone, transform, download and localize taskbeacon task templates using a single entry-point tool.
 
-This README provides instructions for setting up and using `psyflow_mcp` in different environments.
+This README provides instructions for setting up and using `taskbeacon-mcp` in different environments.
 
 ---
 
 ## 1 · Quick Start (Recommended)
 
-The easiest way to use `psyflow_mcp` is with `uvx`. This tool automatically downloads the package from PyPI, installs it and its dependencies into a temporary virtual environment, and runs it in a single step. No manual cloning or setup is required.
+The easiest way to use `taskbeacon-mcp` is with `uvx`. This tool automatically downloads the package from PyPI, installs it and its dependencies into a temporary virtual environment, and runs it in a single step. No manual cloning or setup is required.
 
 ### 1.1 · Prerequisites
 
@@ -26,28 +26,28 @@ pip install uvx
 
 ### 1.2 · LLM Tool Configuration (JSON)
 
-To integrate `psyflow_mcp` with your LLM tool (like Gemini CLI or Cursor), use the following JSON configuration. This tells the tool how to run the server using `uvx`.
+To integrate `taskbeacon-mcp` with your LLM tool (like Gemini CLI or Cursor), use the following JSON configuration. This tells the tool how to run the server using `uvx`.
 
 ```json
 {
-  "name": "psyflow_mcp",
+  "name": "taskbeacon-mcp",
   "type": "stdio",
-  "description": "Local FastMCP server for PsyFlow task operations. Uses uvx for automatic setup.",
+  "description": "Local FastMCP server for taskbeacon task operations. Uses uvx for automatic setup.",
   "isActive": true,
   "command": "uvx",
   "args": [
-    "psyflow_mcp"
+    "taskbeacon-mcp"
   ]
 }
 ```
 
-With this setup, the LLM can now use the `psyflow_mcp` tools.
+With this setup, the LLM can now use the `taskbeacon-mcp` tools.
 
 ---
 
 ## 2 · Manual Setup (For Developers)
 
-This method is for developers who want to modify or contribute to the `psyflow_mcp` source code.
+This method is for developers who want to modify or contribute to the `taskbeacon-mcp` source code.
 
 ### 2.1 · Environment Setup
 
@@ -68,7 +68,7 @@ This is the standard mode for local development, where the server communicates o
 
 1.  **Launch the server:**
     ```bash
-    python psyflow_mcp/main.py
+    python taskbeacon_mcp/main.py
     ```
 
 2.  **LLM Tool Configuration (JSON):**
@@ -76,30 +76,30 @@ This is the standard mode for local development, where the server communicates o
 
     ```json
     {
-      "name": "psyflow_mcp_dev",
+      "name": "taskbeacon-mcp_dev",
       "type": "stdio",
-      "description": "Local development server for PsyFlow task operations.",
+      "description": "Local development server for taskbeacon task operations.",
       "isActive": true,
       "command": "python",
       "args": [
-        "path\\to\\psyflow_mcp\\main.py"
+        "path\\to\\taskbeacon_mcp\\main.py"
       ]
     }
     ```
 
 ### 2.3 · Running as a Persistent Server (SSE)
 
-For a persistent, stateful server, you can run `psyflow_mcp` using Server-Sent Events (SSE). This is ideal for production or when multiple clients need to interact with the same server instance.
+For a persistent, stateful server, you can run `taskbeacon-mcp` using Server-Sent Events (SSE). This is ideal for production or when multiple clients need to interact with the same server instance.
 
 1.  **Modify `main.py`:**
-    In `psyflow_mcp/main.py`, change the last line from `mcp.run(transport="stdio")` to:
+    In `taskbeacon-mcp/main.py`, change the last line from `mcp.run(transport="stdio")` to:
     ```python
 mcp.run(transport="sse", port=8000)
     ```
 
 2.  **Run the server:**
     ```bash
-    python psyflow_mcp/main.py
+    python taskbeacon-mcp/main.py
     ```
     The server will now be accessible at `http://localhost:8000/mcp`.
 
@@ -107,9 +107,9 @@ mcp.run(transport="sse", port=8000)
     To connect an LLM tool to the running SSE server, use a configuration like this:
     ```json
     {
-      "name": "psyflow_mcp_sse",
+      "name": "taskbeacon-mcp_sse",
       "type": "http",
-      "description": "Persistent SSE server for PsyFlow task operations.",
+      "description": "Persistent SSE server for taskbeacon task operations.",
       "isActive": true,
       "endpoint": "http://localhost:8000/mcp"
     }
@@ -136,7 +136,7 @@ mcp.run(transport="sse", port=8000)
 | `list_tasks` | *none* | Returns an array of objects: `{ repo, readme_snippet, branches }`, where `branches` lists up to 20 branch names for that repo. |
 | `download_task` | `repo:str` | Clones any template repo from the registry and returns its local path. |
 | `localize` | `task_path:str`, `target_language:str`, `voice?:str` | Reads `config.yaml`, wraps it in `localize_prompt`, and returns `prompt_messages`. If a `voice` is not provided, it first calls `list_voices` to find suitable options. Also deletes old `_voice.mp3` files. |
-| `list_voices` | `filter_lang?:str` | Returns a human-readable string of available text-to-speech voices from `psyflow`, optionally filtered by language (e.g., "ja", "en"). |
+| `list_voices` | `filter_lang?:str` | Returns a human-readable string of available text-to-speech voices from `taskbeacon`, optionally filtered by language (e.g., "ja", "en"). |
 
 ---
 
