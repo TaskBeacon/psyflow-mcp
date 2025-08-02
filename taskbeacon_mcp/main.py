@@ -28,7 +28,7 @@ from edge_tts import VoicesManager
 # ─────────────────────────────
 ORG = "TaskBeacon"
 CACHE = Path("./task_cache"); 
-NON_TASK_REPOS = {"task-registry", ".github","psyflow","psyflow-mcp","community","taskbeacon.github.io"}
+NON_TASK_REPOS = {"task-registry", ".github","psyflow","taskbeacon-mcp","community","taskbeacon.github.io"}
 
 yaml = YAML(); yaml.indent(mapping=2, sequence=4, offset=2)
 
@@ -377,7 +377,7 @@ async def localize(task_path: str, target_language: str, voice: Optional[str] = 
     return {"prompt_messages": [m.dict() for m in msgs]}
 
 @mcp.tool()
-def list_voices(filter_lang: Optional[str] = None) -> str:
+async def list_voices(filter_lang: Optional[str] = None) -> str:
     '''
     List supported voices from psyflow, optionally filtering by language.
     '''
