@@ -13,7 +13,7 @@ import asyncio
 import textwrap
 from pathlib import Path
 from typing import Dict, List, Optional
-
+from fuzzywuzzy import process
 import httpx
 from git import Repo
 from mcp.server.fastmcp import FastMCP
@@ -21,6 +21,49 @@ from mcp.server.fastmcp import FastMCP
 from mcp.server.fastmcp.prompts.base import UserMessage, Message
 from ruamel.yaml import YAML
 from edge_tts import VoicesManager
+
+
+# ─────────────────────────────
+# Language Mapping
+# ─────────────────────────────
+LANGUAGE_MAP = {
+    "arabic": "ar", "egyptian arabic": "ar-EG", "saudi arabic": "ar-SA",
+    "bengali": "bn", "bulgarian": "bg", "catalan": "ca", "mandarin chinese": "zh-CN",
+    "taiwanese chinese": "zh-TW", "croatian": "hr", "czech": "cs", "danish": "da",
+    "dutch": "nl", "english": "en", "australian english": "en-AU", "canadian english": "en-CA",
+    "uk english": "en-GB", "us english": "en-US", "estonian": "et", "filipino": "fil",
+    "finnish": "fi", "french": "fr", "canadian french": "fr-CA", "german": "de",
+    "austrian german": "de-AT", "swiss german": "de-CH", "greek": "el", "gujarati": "gu",
+    "hebrew": "he", "hindi": "hi", "hungarian": "hu", "icelandic": "is", "indonesian": "id",
+    "irish": "ga", "italian": "it", "japanese": "ja", "kannada": "kn", "kazakh": "kk",
+    "korean": "ko", "latvian": "lv", "lithuanian": "lt", "macedonian": "mk", "malay": "ms",
+    "malayalam": "ml", "maltese": "mt", "marathi": "mr", "norwegian": "nb", "persian": "fa",
+    "polish": "pl", "portuguese": "pt", "brazilian portuguese": "pt-BR", "romanian": "ro",
+    "russian": "ru", "serbian": "sr", "slovak": "sk", "slovenian": "sl", "spanish": "es",
+    "mexican spanish": "es-MX", "us spanish": "es-US", "swahili": "sw", "swedish": "sv",
+    "tamil": "ta", "telugu": "te", "thai": "th", "turkish": "tr", "ukrainian": "uk",
+    "urdu": "ur", "vietnamese": "vi", "welsh": "cy"
+}
+
+def _get_lang_code(lang_name: str) -> Optional[str]:
+    """Find the best language code match for a natural language name."""
+    if not lang_name:
+        return None
+    
+    # Check for direct match in values
+    if lang_name.lower() in LANGUAGE_MAP.values():
+        return lang_name.lower()
+
+    # Check for direct match in keys
+    if lang_name.lower() in LANGUAGE_MAP:
+        return LANGUAGE_MAP[lang_name.lower()]
+
+    # Fuzzy matching for natural language names
+    match = process.extractOne(lang_name.lower(), LANGUAGE_MAP.keys())
+    if match and match[1] > 80:  # Confidence threshold
+        return LANGUAGE_MAP[match[0]]
+    
+    return None
 
 
 # ─────────────────────────────
@@ -118,7 +161,7 @@ def localize_prompt(yaml_text: str, target_language: str, voice_options: Optiona
             "If no suitable voice is available, set `voice_name: null`."
             f"Available voices: {voice_options}; select one from it"
         )
-    intro += "Lastly, update the config.yaml file with translated values and tweaks — no commentary."
+    intro += "Lastly, output the entire translated and updated config.yaml content with no commentary."
     return [UserMessage(intro), UserMessage(yaml_text)]
 
 
@@ -373,7 +416,8 @@ async def localize(task_path: str, target_language: str, voice: Optional[str] = 
     if voice:
         voice_options = voice
     else:
-        voice_options = await list_voices(filter_lang=target_language)
+        lang_code = _get_lang_code(target_language)
+        voice_options = await list_voices(filter_lang=lang_code)
 
     msgs = localize_prompt(yaml_text, target_language, voice_options)
     return {"prompt_messages": [m.dict() for m in msgs]}
@@ -383,7 +427,8 @@ async def list_voices(filter_lang: Optional[str] = None) -> str:
     '''
     List supported voices from psyflow, optionally filtering by language.
     '''
-    return await list_supported_voices(filter_lang=filter_lang, human_readable=True)
+    lang_code = _get_lang_code(filter_lang) if filter_lang else None
+    return await list_supported_voices(filter_lang=lang_code, human_readable=True)
 
 @mcp.tool()
 async def list_tasks() -> List[Dict]:
