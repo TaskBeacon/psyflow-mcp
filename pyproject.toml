@@ -1,6 +1,6 @@
 [project]
 name = "taskbeacon-mcp"
-version = "0.1.2"
+version = "0.1.3"
 description = "A model contexture protocal (MCP) for TaskBeacon"
 authors = [
   { name = "Zhipeng Cao", email = "zhipeng30@foxmail.com" }

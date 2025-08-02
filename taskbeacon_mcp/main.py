@@ -248,13 +248,13 @@ async def list_supported_voices(
     filter_lang : str, optional
         Return only voices whose locale starts with this prefix.
     human_readable : bool, optional
-        If ``True`` print a formatted table; otherwise return the raw list.
+        If ``True``, return a formatted table as a string; otherwise, return the raw list.
 
     Returns
     -------
-    list of dict or None
+    list of dict or str
         The raw voice dictionaries if ``human_readable`` is ``False``,
-        otherwise ``None``.
+        or a formatted string if ``True``.
     """
     voices = await _list_supported_voices_async(filter_lang)
     if not human_readable:
@@ -266,8 +266,8 @@ async def list_supported_voices(
         f"{'Personalities':30} {'FriendlyName'}"
     )
     separator = "-" * len(header)
-    print(header)
-    print(separator)
+
+    lines = [header, separator]
 
     for v in voices:
         short = v.get("ShortName", "")[:25]
@@ -279,7 +279,9 @@ async def list_supported_voices(
         # Use FriendlyName as the display name
         disp  = v.get("FriendlyName", v.get("Name", ""))
 
-        print(f"{short:25} {loc:10} {gen:8} {pers:30} {disp}")
+        lines.append(f"{short:25} {loc:10} {gen:8} {pers:30} {disp}")
+    
+    return "\n".join(lines)
 # ═════════════════════════════
 # TOOLS
 # ═════════════════════════════
@@ -371,7 +373,7 @@ async def localize(task_path: str, target_language: str, voice: Optional[str] = 
     if voice:
         voice_options = voice
     else:
-        voice_options = list_voices(filter_lang=target_language)
+        voice_options = await list_voices(filter_lang=target_language)
 
     msgs = localize_prompt(yaml_text, target_language, voice_options)
     return {"prompt_messages": [m.dict() for m in msgs]}
@@ -381,7 +383,7 @@ async def list_voices(filter_lang: Optional[str] = None) -> str:
     '''
     List supported voices from psyflow, optionally filtering by language.
     '''
-    return list_supported_voices(filter_lang=filter_lang, human_readable=True)
+    return await list_supported_voices(filter_lang=filter_lang, human_readable=True)
 
 @mcp.tool()
 async def list_tasks() -> List[Dict]:
